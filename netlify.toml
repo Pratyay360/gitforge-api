@@ -1,0 +1,18 @@
+# gitforge-api-mcp — Netlify configuration
+#
+# The entire app is served by a single Netlify Function (functions v2):
+#   netlify/functions/mcp.ts
+# Its in-source config routes all paths ("/*") through the Hono app, which
+# dispatches to:
+#   - /mcp/*      MCP endpoint (streamable HTTP / SSE)
+#   - /{forge}    Scalar API reference docs (github, gitlab, forgejo, ...)
+#   - /           server metadata JSON
+#
+# Nothing is published from the publish directory; the function handles every
+# request. Streaming (SSE) responses have no execution timeout on Netlify.
+
+[functions]
+  node_bundler = "esbuild"
+
+[build]
+  publish = "public"

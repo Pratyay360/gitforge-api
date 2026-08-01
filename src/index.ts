@@ -6,7 +6,7 @@ import { registerPrompts } from "./prompts";
 import { registerResources } from "./resources";
 import { registerTools } from "./tools";
 
-const app = new Hono();
+export const app = new Hono();
 
 const handler = createMcpHandler(
 	(server) => {
