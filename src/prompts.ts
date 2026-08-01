@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod";
-import { FORGES } from "./config";
+import { FORGES, FORGE_IDS_TUPLE } from "./config";
 
 export function registerPrompts(server: McpServer): void {
 	server.registerPrompt(
@@ -10,17 +10,7 @@ export function registerPrompts(server: McpServer): void {
 			description:
 				"Generate a human readable explaination about the specific endpoint.",
 			argsSchema: z.object({
-				forge: z
-					.enum([
-						"github",
-						"gitlab",
-						"forgejo",
-						"codeberg",
-						"bitbucket",
-						"gitea",
-						"sourcehut",
-					] as const)
-					.describe("Which git forge"),
+				forge: z.enum([...FORGE_IDS_TUPLE]).describe("Which git forge"),
 				operationId: z
 					.string()
 					.describe("The operationId of the endpoint to explain"),
@@ -53,19 +43,9 @@ export function registerPrompts(server: McpServer): void {
 						"The concept to compare, e.g., 'list repositories', 'create issue', 'get user'",
 					),
 				forges: z
-					.array(
-						z.enum([
-							"github",
-							"gitlab",
-							"forgejo",
-							"codeberg",
-							"bitbucket",
-							"gitea",
-							"sourcehut",
-						] as const),
-					)
+					.string()
 					.optional()
-					.describe("Which forges to compare (default: all)"),
+					.describe("Comma-separated list of forges to compare (default: all)"),
 				query: z
 					.string()
 					.optional()
@@ -74,15 +54,22 @@ export function registerPrompts(server: McpServer): void {
 					),
 			}),
 		},
-		({ endpoint, query }) => {
+		({ endpoint, query, forges }) => {
 			const searchTerm = query ?? endpoint;
+			const targets = forges
+				? forges
+						.split(",")
+						.map((f) => f.trim())
+						.filter(Boolean)
+						.join(", ")
+				: "all supported git forges";
 			return {
 				messages: [
 					{
 						role: "user",
 						content: {
 							type: "text" as const,
-							text: `Search term for finding relevant endpoints: "${searchTerm}"\n\n`,
+							text: `Search term for finding relevant endpoints: "${searchTerm}"\n\nCompare the equivalent "${endpoint}" endpoints across: ${targets}. Use the 'search_routes' tool to fetch each forge's matching routes, then present a side-by-side comparison.\n`,
 						},
 					},
 				],
@@ -97,17 +84,7 @@ export function registerPrompts(server: McpServer): void {
 			description:
 				"documentation for authenticating with a specific git forge's API for performing authenticated requests.",
 			argsSchema: z.object({
-				forge: z
-					.enum([
-						"github",
-						"gitlab",
-						"forgejo",
-						"codeberg",
-						"bitbucket",
-						"gitea",
-						"sourcehut",
-					] as const)
-					.describe("Which git forge to guide authentication for"),
+				forge: z.enum([...FORGE_IDS_TUPLE]).describe("Which git forge to guide authentication for"),
 			}),
 		},
 		({ forge }) => {
@@ -149,14 +126,14 @@ export function registerPrompts(server: McpServer): void {
 					.describe("Which git forge"),
 			}),
 		},
-		() => {
+		({ forge }) => {
 			return {
 				messages: [
 					{
 						role: "user",
 						content: {
 							type: "text" as const,
-							text: `For each, show the HTTP method, path, key parameters, and a curl example with auth.\n`,
+							text: `Write a quick start guide for the ${FORGES[forge].name} API (${forge}). For each key operation, show the HTTP method, path, key parameters, and a curl example with auth.\n`,
 						},
 					},
 				],

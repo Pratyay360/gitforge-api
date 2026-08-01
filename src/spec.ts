@@ -1,6 +1,6 @@
 import * as yaml from "js-yaml";
 
-import { FORGE_IDS, FORGES, type ForgeConfig } from "./config";
+import { FORGE_IDS, FORGES, type ForgeConfig, type ForgeId } from "./config";
 import { parseGraphQLSchema } from "./graphql";
 
 export type SpecFormat = "openapi" | "graphql";
@@ -54,19 +54,28 @@ export interface NormalizedSpec {
 	tags: string[];
 }
 
+const SPEC_TTL_MS = 6 * 60 * 60 * 1000;
+const specCache = new Map<
+	string,
+	{ promise: Promise<NormalizedSpec>; expiresAt: number }
+>();
+
 export async function getSpec(forgeId: string): Promise<NormalizedSpec> {
-	const forge = FORGES[forgeId];
+	const forge = FORGES[forgeId as ForgeId];
 	if (!forge) throw new Error(`Unknown forge: ${forgeId}`);
-	return loadSpec(forge);
+	const now = Date.now();
+	const cached = specCache.get(forgeId);
+	if (cached && cached.expiresAt > now) return cached.promise;
+	const promise = loadRemoteSpec(forge);
+	specCache.set(forgeId, { promise, expiresAt: now + SPEC_TTL_MS });
+	promise.catch(() => {
+		if (specCache.get(forgeId)?.promise === promise) specCache.delete(forgeId);
+	});
+	return promise;
 }
 
 export async function getAllSpecs(): Promise<NormalizedSpec[]> {
 	return Promise.all(FORGE_IDS.map((id) => getSpec(id)));
-}
-
-async function loadSpec(forge: ForgeConfig): Promise<NormalizedSpec> {
-
-	return loadRemoteSpec(forge);
 }
 
 async function loadRemoteSpec(forge: ForgeConfig): Promise<NormalizedSpec> {

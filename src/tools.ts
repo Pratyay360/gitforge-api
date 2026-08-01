@@ -1,20 +1,10 @@
 import type { McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod";
-import { FORGE_IDS, FORGES } from "./config";
+import { FORGE_IDS, FORGES, FORGE_IDS_TUPLE } from "./config";
 import type { NormalizedRoute } from "./spec";
 import { getAllSpecs, getSpec } from "./spec";
 
-const FORGE_OPTIONS = [
-	"github",
-	"gitlab",
-	"forgejo",
-	"codeberg",
-	"bitbucket",
-	"gitea",
-	"sourcehut",
-] as const;
-
-const FORGE_SEARCH_OPTIONS = [...FORGE_OPTIONS, "all"] as const;
+const FORGE_SEARCH_OPTIONS = [...FORGE_IDS_TUPLE, "all"] as const;
 
 export function registerTools(server: McpServer): void {
 	server.registerTool(
@@ -51,7 +41,7 @@ export function registerTools(server: McpServer): void {
 			description: "List API routes/endpoints for a specific git forge.",
 			annotations: { readOnlyHint: true, openWorldHint: true },
 			inputSchema: z.object({
-				forge: z.enum(FORGE_OPTIONS).describe("Which git forge to query"),
+				forge: z.enum([...FORGE_IDS_TUPLE]).describe("Which git forge to query"),
 				method: z
 					.enum([
 						"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS", "QUERY", "MUTATION", "all",
@@ -118,14 +108,14 @@ export function registerTools(server: McpServer): void {
 			annotations: { readOnlyHint: true, openWorldHint: true },
 			inputSchema: z.object({
 				query: z.string().describe("Search term to match against path, operationId, summary, or tags"),
-				forge: z.enum(FORGE_SEARCH_OPTIONS).optional().default("all").describe("Which forge to search (default: all)"),
+				forge: z.enum([...FORGE_SEARCH_OPTIONS]).optional().default("all").describe("Which forge to search (default: all)"),
 				limitPerForge: z.number().int().min(1).max(50).optional().default(20).describe("Max results per forge"),
 			}),
 		},
 		async (args) => {
 			try {
 				const queryLower = args.query.toLowerCase();
-				const forgesToSearch = args.forge === "all" ? FORGE_IDS : [args.forge];
+				const forgesToSearch: string[] = args.forge === "all" ? [...FORGE_IDS] : [args.forge];
 				const allSpecs = await getAllSpecs();
 				const matchingSpecs = allSpecs.filter((s) => forgesToSearch.includes(s.forge));
 
@@ -177,13 +167,20 @@ export function registerTools(server: McpServer): void {
 			description: "Get detailed information about a specific API route, including parameters, request body, and response schemas.",
 			annotations: { readOnlyHint: true, openWorldHint: false },
 			inputSchema: z.object({
-				forge: z.enum(FORGE_OPTIONS).describe("Which git forge"),
-				operationId: z.string().describe("The operationId of the route (e.g., 'repos-get')"),
+				forge: z.enum([...FORGE_IDS_TUPLE]).describe("Which git forge"),
+				operationId: z.string().optional().describe("The operationId of the route (e.g., 'repos/get')"),
 				path: z.string().optional().describe("Alternative: the path. If provided, path takes precedence."),
 			}),
 		},
 		async (args) => {
 			try {
+				if (!args.operationId && !args.path) {
+					return {
+						content: [{ type: "text", text: "Either operationId or path is required for get_route." }],
+						isError: true,
+					};
+				}
+
 				const spec = await getSpec(args.forge);
 				let route: NormalizedRoute | undefined;
 
@@ -197,11 +194,13 @@ export function registerTools(server: McpServer): void {
 				}
 
 				if (!route) {
+					const opText = args.operationId ? `operationId="${args.operationId}"` : "the given path";
+					const pathText = args.path ? ` or path="${args.path}"` : "";
 					return {
 						content: [
 							{
 								type: "text",
-								text: `No route found in ${spec.forgeName} matching operationId="${args.operationId}"${args.path ? ` or path="${args.path}"` : ""}`,
+								text: `No route found in ${spec.forgeName} matching ${opText}${pathText}`,
 							},
 						],
 						isError: true,
@@ -228,7 +227,7 @@ export function registerTools(server: McpServer): void {
 			description: "List all API tags (resource groups) for a specific git forge.",
 			annotations: { readOnlyHint: true, openWorldHint: false },
 			inputSchema: z.object({
-				forge: z.enum(FORGE_OPTIONS).describe("Which git forge"),
+				forge: z.enum([...FORGE_IDS_TUPLE]).describe("Which git forge"),
 			}),
 		},
 		async (args) => {

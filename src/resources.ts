@@ -13,7 +13,7 @@ function getVar(variables: Record<string, string | string[]>, key: string): stri
 export function registerResources(server: McpServer): void {
 	server.registerResource(
 		"list_gitforges",
-		"gitforge://gitsforges",
+		"gitforge://gitforges",
 		{
 			title: "Git Forge documentation",
 			description: "All supported git hosting forges with metadata.",
@@ -34,7 +34,7 @@ export function registerResources(server: McpServer): void {
 			return {
 				contents: [
 					{
-						uri: "gitforge://gitsforges",
+						uri: "gitforge://gitforges",
 						text: JSON.stringify({ forges }, null, 2),
 						mimeType: "application/json",
 					},
@@ -159,7 +159,7 @@ export function registerResources(server: McpServer): void {
 
 	server.registerResource(
 		"route-detail",
-		new ResourceTemplate("gitforge://{forge}/route/{operationId}", {
+		new ResourceTemplate("gitforge://{forge}/route/{+operationId}", {
 			list: async () => {
 				const specs = await getAllSpecs();
 				const resources: { uri: string; name: string; mimeType: string; description: string }[] = [];
@@ -177,12 +177,12 @@ export function registerResources(server: McpServer): void {
 			},
 			complete: {
 				forge: async (value: string) => FORGE_IDS.filter((id) => id.startsWith(value)),
-				operationId: async (_value: string, ctx) => {
+				operationId: async (value: string, ctx) => {
 					const forge = ctx?.arguments?.forge;
 					if (!forge || typeof forge !== "string") return [];
 					try {
 						const spec = await getSpec(forge);
-						return spec.routes.map((r) => r.operationId);
+						return spec.routes.map((r) => r.operationId).filter((id) => id.startsWith(value));
 					} catch {
 						return [];
 					}

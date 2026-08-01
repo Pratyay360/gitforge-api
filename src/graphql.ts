@@ -253,7 +253,3 @@ export function parseGraphQLSchema(sdl: string): {
 		types,
 	};
 }
-
-export function simplifyGqlType(type: string): string {
-	return type || "Unknown";
-}

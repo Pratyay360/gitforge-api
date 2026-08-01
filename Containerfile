@@ -1,9 +1,10 @@
 FROM ghcr.io/nubjs/nub:slim
 WORKDIR /app
-COPY . .
+COPY --chown=node:node . .
 
 EXPOSE 3000
 
+RUN nub pm use bun
 RUN nub install
 
 CMD ["nub", "run", "dev"]

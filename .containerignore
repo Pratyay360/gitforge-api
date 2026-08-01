@@ -1,0 +1,21 @@
+# deps — must NOT be copied; installed fresh inside the image
+node_modules/
+
+# build / local caches
+dist/
+.wrangler
+.netlify
+!.npmrc
+# environment
+.env
+.env.production
+.dev.vars
+
+# vcs / tooling
+.git
+.github
+.mise.toml*
+
+# logs & misc
+*.log
+.DS_Store

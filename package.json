@@ -5,23 +5,18 @@
   "type": "module",
   "scripts": {
     "dev": "bun ./src/index.ts",
-    "typecheck": "tsc --noEmit",
-    "lint": "biome lint"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@hono/node-server": "^2.0.12",
     "@modelcontextprotocol/server": "^2.0.0",
     "@scalar/hono-api-reference": "^0.11.12",
-    "@types/node": "^26.1.2",
     "hono": "^4.12.33",
     "js-yaml": "^5.2.3",
     "mcp-handler": "^2.1.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.6",
-    "@types/js-yaml": "^4.0.9",
-    "tsx": "^4.23.1",
+    "@types/node": "^26.1.2",
     "typescript": "^7.0.2"
   },
   "devEngines": {

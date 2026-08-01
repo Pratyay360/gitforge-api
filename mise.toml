@@ -1,5 +1,4 @@
 [tools]
-biome = "latest"
 node = "latest"
 "npm:netlify-cli" = "latest"
 nub = { version = "latest", allow_builds = ["@nubjs/nub"] }

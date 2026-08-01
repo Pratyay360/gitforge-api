@@ -6,12 +6,6 @@ import { registerPrompts } from "./prompts";
 import { registerResources } from "./resources";
 import { registerTools } from "./tools";
 
-export type Env = {
-	Bindings: {
-		context: "https://edge.netlify.com/";
-	};
-};
-
 const app = new Hono();
 
 const handler = createMcpHandler(
@@ -50,10 +44,10 @@ app.get("/", (c) => {
 				"list_tags",
 			],
 			resources: [
-				"gitforge://gitsforges",
+				"gitforge://gitforges",
 				"gitforge://{forge}/routes",
 				"gitforge://{forge}/tags",
-				"gitforge://{forge}/route/{operationId}",
+				"gitforge://{forge}/route/{+operationId}",
 				"gitforge://{forge}/spec",
 			],
 			prompts: [

@@ -12,13 +12,24 @@ export interface ForgeConfig {
 
 	spec: {
 		format: SpecFormat;
-		source: "remote" | "local";
 		url: string;
 	};
 	version?: string;
 }
 
-export const FORGES: Record<string, ForgeConfig> = {
+export const FORGE_IDS_TUPLE = [
+	"github",
+	"gitlab",
+	"forgejo",
+	"codeberg",
+	"bitbucket",
+	"gitea",
+	"sourcehut",
+] as const;
+
+export type ForgeId = (typeof FORGE_IDS_TUPLE)[number];
+
+export const FORGES: Record<ForgeId, ForgeConfig> = {
 	github: {
 		id: "github",
 		name: "GitHub",
@@ -32,7 +43,6 @@ export const FORGES: Record<string, ForgeConfig> = {
 		],
 		spec: {
 			format: "openapi-json",
-			source: "remote",
 			url: "https://raw.githubusercontent.com/github/rest-api-description/main/descriptions/api.github.com/api.github.com.json",
 		},
 	},
@@ -50,7 +60,6 @@ export const FORGES: Record<string, ForgeConfig> = {
 		],
 		spec: {
 			format: "openapi-yaml",
-			source: "remote",
 			url: "https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/openapi/openapi_v3.yaml?ref_type=heads",
 		},
 	},
@@ -67,7 +76,6 @@ export const FORGES: Record<string, ForgeConfig> = {
 		],
 		spec: {
 			format: "openapi-json",
-			source: "remote",
 			url: "https://v15.next.forgejo.org/swagger.v1.json",
 		},
 	},
@@ -80,7 +88,6 @@ export const FORGES: Record<string, ForgeConfig> = {
 		authMethods: ["Personal Access Token (Bearer)", "OAuth 2.0"],
 		spec: {
 			format: "openapi-json",
-			source: "remote",
 			url: "https://codeberg.org/swagger.v1.json",
 		},
 	},
@@ -93,7 +100,6 @@ export const FORGES: Record<string, ForgeConfig> = {
 		authMethods: ["App Password", "OAuth 2.0", "JWT"],
 		spec: {
 			format: "openapi-json",
-			source: "remote",
 			url: "https://dac-static.atlassian.com/cloud/bitbucket/swagger.v3.json",
 		},
 	},
@@ -110,7 +116,6 @@ export const FORGES: Record<string, ForgeConfig> = {
 		],
 		spec: {
 			format: "openapi-json",
-			source: "remote",
 			url: "https://raw.githubusercontent.com/go-gitea/gitea/main/templates/swagger/v1-openapi3.generated.json",
 		},
 	},
@@ -123,18 +128,9 @@ export const FORGES: Record<string, ForgeConfig> = {
 		authMethods: ["OAuth 2.0 Bearer Token", "Basic Auth (meta token)"],
 		spec: {
 			format: "graphql",
-			source: "remote",
 			url: "https://git.sr.ht/~sircmpwn/git.sr.ht/blob/master/api/graph/schema.graphqls",
 		},
 	},
 };
 
-export const FORGE_IDS = Object.keys(FORGES);
-
-export function forgesByAuth(method: string): string[] {
-	return FORGE_IDS.filter((id) =>
-		FORGES[id].authMethods.some((m) =>
-			m.toLowerCase().includes(method.toLowerCase()),
-		),
-	);
-}
+export const FORGE_IDS: readonly ForgeId[] = FORGE_IDS_TUPLE;
